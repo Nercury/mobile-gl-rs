@@ -1,24 +1,56 @@
-apply plugin: 'com.android.application'
+apply plugin: 'com.android.model.application'
 
-android {
-    compileSdkVersion 23
-    buildToolsVersion "23.0.2"
+model {
+    android {
+        compileSdkVersion = 23
+        buildToolsVersion = "23.0.2"
 
-    defaultConfig {
-        applicationId "com.trafi.trafiinspector"
-        minSdkVersion 10
-        targetSdkVersion 23
-        versionCode 1
-        versionName "1.0"
-    }
-    buildTypes {
-        release {
-            minifyEnabled false
+        defaultConfig.with {
+            applicationId = "com.trafi.inspector"
+            minSdkVersion.apiLevel = 21
+            targetSdkVersion.apiLevel = 23
+            versionCode = 1
+            versionName = "1.0"
         }
     }
-}
-
-dependencies {
-    compile fileTree(dir: 'libs', include: ['*.jar'])
-    compile 'com.android.support:appcompat-v7:23.1.1'
+    android.ndk {
+        moduleName = "glass-activity"
+        CFlags.add("-I${file("src/main/jni/glass-activity")}".toString())
+        ldLibs.addAll(
+            [
+                "log", "android", "EGL", "GLESv1_CM"
+            ]
+        )
+    }
+    android.buildTypes {
+        release {
+            minifyEnabled = false
+        }
+        debug {
+            debuggable = true
+            minifyEnabled = false
+        }
+    }
+    android.productFlavors {
+        create ("arm7") {
+            ndk.abiFilters.add("armeabi-v7a")
+        }
+        create ("arm8") {
+            ndk.abiFilters.add("arm64-v8a")
+        }
+        create ("x86-32") {
+            ndk.abiFilters.add("x86")
+        }
+        create ("x86-64") {
+            ndk.abiFilters.add("x86_64")
+        }
+        create ("mips") {
+            ndk.abiFilters.add("mips")
+        }
+        create ("mips64") {
+            ndk.abiFilters.add("mips64")
+        }
+        // https://developer.android.com/ndk/guides/abis.html#sa
+        create("fat")
+    }
 }

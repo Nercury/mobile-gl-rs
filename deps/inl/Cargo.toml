@@ -1,0 +1,10 @@
+[package]
+name = "inl"
+version = "0.1.0"
+authors = ["Nerijus Arlauskas <nercury@gmail.com>"]
+
+[lib]
+name = "inl"
+crate-type = ["staticlib"]
+
+[dependencies]

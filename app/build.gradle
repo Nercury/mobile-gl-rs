@@ -1,4 +1,45 @@
+import org.gradle.nativeplatform.tasks.LinkSharedLibrary
+
 apply plugin: 'com.android.model.application'
+
+def versionCodeBase = 11;
+def appPlatforms = [
+    'armeabi': [
+        flavorName: 'arm',
+        versionCodePrefix: 1,
+        rustTarget: 'arm-linux-androideabi',
+    ],
+    'armeabi-v7a': [
+        flavorName: 'arm7',
+        versionCodePrefix: 2,
+        rustTarget: 'arm-linux-androideabi',
+    ],
+    'arm64-v8a': [
+        flavorName: 'arm64',
+        versionCodePrefix: 3,
+        rustTarget: '',
+    ],
+    'mips': [
+        flavorName: 'mips',
+        versionCodePrefix: 5,
+        rustTarget: '',
+    ],
+    'mips64': [
+        flavorName: 'mips64',
+        versionCodePrefix: 6,
+        rustTarget: '',
+    ],
+    'x86': [
+        flavorName: 'x86',
+        versionCodePrefix: 8,
+        rustTarget: 'i686-linux-android',
+    ],
+    'x86_64': [
+        flavorName: 'x86_64',
+        versionCodePrefix: 9,
+        rustTarget: '',
+    ]
+];
 
 model {
     android {
@@ -7,7 +48,7 @@ model {
 
         defaultConfig.with {
             applicationId = "com.trafi.inspector"
-            minSdkVersion.apiLevel = 21
+            minSdkVersion.apiLevel = 17
             targetSdkVersion.apiLevel = 23
             versionCode = 1
             versionName = "1.0"
@@ -15,6 +56,9 @@ model {
     }
     android.ndk {
         moduleName = "glass-activity"
+        cppFlags.add("-std=c++14") // Add provisions to allow C++11 functionality
+        cppFlags.add("-fexceptions")
+        stl = "stlport_static" // gnustl or stlport
         CFlags.add("-I${file("src/main/jni/glass-activity")}".toString())
         ldLibs.addAll(
             [
@@ -32,25 +76,50 @@ model {
         }
     }
     android.productFlavors {
-        create ("arm7") {
-            ndk.abiFilters.add("armeabi-v7a")
+        appPlatforms.each { p ->
+            create (p.value.flavorName) {
+                ndk.abiFilters.add(p.key)
+                //ndk.ldLibs.add(file(rootDir).absolutePath) //file(rootDir).absolutePath + "/tgl/target/arm-linux-androideabi/debug/libtgl.a")
+                versionCode = p.value.versionCodePrefix * 1000000 + versionCodeBase
+            }
         }
-        create ("arm8") {
-            ndk.abiFilters.add("arm64-v8a")
+        create("fat") {
+            versionCode = versionCodeBase
         }
-        create ("x86-32") {
-            ndk.abiFilters.add("x86")
-        }
-        create ("x86-64") {
-            ndk.abiFilters.add("x86_64")
-        }
-        create ("mips") {
-            ndk.abiFilters.add("mips")
-        }
-        create ("mips64") {
-            ndk.abiFilters.add("mips64")
-        }
-        // https://developer.android.com/ndk/guides/abis.html#sa
-        create("fat")
     }
+}
+
+tasks.whenTaskAdded { t ->
+    if (!(t instanceof LinkSharedLibrary)) {
+        return;
+    }
+
+    def crateName = "inl"
+
+    def platform = t.properties.get("targetPlatform")
+    def depsDir = new File(rootDir, "deps")
+    def crateDir = new File(depsDir, crateName)
+
+    def rustTarget = appPlatforms.get(platform.name).rustTarget
+    def targetDir = new File(crateDir, "target")
+    def targetPlatformDir = new File(targetDir, rustTarget)
+
+    t.dependsOn task("rust-$t.name", {
+        inputs.dir new File(crateDir, 'src')
+        inputs.file new File(crateDir, 'Cargo.toml')
+        outputs.file new File(targetPlatformDir, "lib" + crateName + ".a")
+
+        doFirst {
+            if (rustTarget == "") {
+                throw new StopExecutionException("Can not build Rust for " + platform + " yet.");
+            }
+            println "building rust lib " + crateName + " on " + platform + " with " + rustTarget + " target"
+
+            exec {
+                workingDir rootDir
+                executable 'dev/build.sh'
+                args rustTarget
+            }
+        }
+    })
 }

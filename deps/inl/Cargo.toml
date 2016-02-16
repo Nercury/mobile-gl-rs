@@ -2,9 +2,11 @@
 name = "inl"
 version = "0.1.0"
 authors = ["Nerijus Arlauskas <nercury@gmail.com>"]
+build = "build.rs"
 
 [lib]
 name = "inl"
 crate-type = ["staticlib"]
 
-[dependencies]
+[build-dependencies]
+rusty-cheddar = "0.3.0"

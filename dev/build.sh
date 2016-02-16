@@ -10,4 +10,4 @@ if [ "$2" == "release" ]; then
     BUILD_TYPE="--release"
 fi
 
-/usr/local/bin/cargo build --target=${1} ${BUILD_TYPE} --verbose
+/usr/local/bin/cargo build --target=${1} ${BUILD_TYPE} -j 8

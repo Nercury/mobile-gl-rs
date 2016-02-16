@@ -48,6 +48,13 @@ def appPlatforms = [
     ]
 ];
 
+def crateName = "inl"
+def depsDir = new File(rootDir, "deps")
+def crateDir = new File(depsDir, crateName)
+def crateTargetDir = new File(crateDir, "target")
+def crateIncludeDir = new File(crateTargetDir, "include")
+def crateIncludeFile = new File(crateIncludeDir, "inl.h")
+
 model {
     android {
         compileSdkVersion = 23
@@ -63,10 +70,13 @@ model {
     }
     android.ndk {
         moduleName = "glass-activity"
+        stl = "stlport_static" // gnustl or stlport
+
         cppFlags.add("-std=c++14") // Add provisions to allow C++11 functionality
         cppFlags.add("-fexceptions")
-        stl = "stlport_static" // gnustl or stlport
-        CFlags.add("-I${file("src/main/jni/glass-activity")}".toString())
+        cppFlags.add("-I${crateIncludeDir}".toString())
+        cppFlags.add("-I${file("src/main/jni/glass-activity")}".toString())
+
         ldLibs.addAll(
             [
                 "log", "android", "EGL", "GLESv1_CM"
@@ -102,34 +112,55 @@ model {
     }
 }
 
+// Run cargo build for library to generate target/include/ headers
+task buildIncludeHeaders {
+    inputs.dir new File(crateDir, 'src')
+    inputs.file new File(crateDir, 'build.rs')
+    inputs.file new File(crateDir, 'Cargo.toml')
+    outputs.file crateIncludeFile
+
+    doFirst {
+        println "building rust include headers"
+        exec {
+            workingDir crateDir
+            executable '/usr/local/bin/cargo'
+            args = ["build", "-j", "8"]
+        }
+    }
+}
+
+tasks.whenTaskAdded { t ->
+    if (t.path.contains(":compile")) {
+        t.inputs.file crateIncludeFile
+        t.dependsOn buildIncludeHeaders
+    }
+}
+
+// For every existing platform, create a task to build rust library with correct target
 tasks.whenTaskAdded { t ->
     if (!(t instanceof LinkSharedLibrary)) {
         return;
     }
 
-    def crateName = "inl"
-
     def platform = t.properties.get("targetPlatform")
-    def depsDir = new File(rootDir, "deps")
-    def crateDir = new File(depsDir, crateName)
-
     def buildType = t.name.contains("Release") ? "release" : "debug"
 
     def rustTarget = appPlatforms.get(platform.name).rustTarget
 
-    def targetDir = new File(crateDir, "target")
-    def targetPlatformDir = new File(targetDir, rustTarget)
+    def targetPlatformDir = new File(crateTargetDir, rustTarget)
     def targetBuildTypeDir = new File(targetPlatformDir, buildType)
     def targetLibFile = new File(targetBuildTypeDir, "lib" + crateName + ".a")
 
     def linkerArgs = t.properties.get('linkerArgs');
     linkerArgs.add("-l" + targetLibFile.getPath() + "")
     t.properties['linkerArgs'] = linkerArgs
+    t.inputs.file crateIncludeFile
     t.inputs.file targetLibFile
 
     t.dependsOn task("rust-$t.name", { rustTask ->
         inputs.property "buildType", buildType
         inputs.dir new File(crateDir, 'src')
+        inputs.file new File(crateDir, 'build.rs')
         inputs.file new File(crateDir, 'Cargo.toml')
         outputs.file targetLibFile
 

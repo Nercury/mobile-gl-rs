@@ -64,8 +64,8 @@ model {
             applicationId = "com.trafi.inspector"
             minSdkVersion.apiLevel = 17
             targetSdkVersion.apiLevel = 23
-            versionCode = 1
-            versionName = "1.0"
+            versionCode = versionCodeBase
+            versionName = versionCodeBase + ".0"
         }
     }
     android.ndk {

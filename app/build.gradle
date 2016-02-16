@@ -5,39 +5,46 @@ apply plugin: 'com.android.model.application'
 def versionCodeBase = 11;
 def appPlatforms = [
     'armeabi': [
+        enabled: true,
         flavorName: 'arm',
         versionCodePrefix: 1,
         rustTarget: 'arm-linux-androideabi',
     ],
     'armeabi-v7a': [
+        enabled: true,
         flavorName: 'arm7',
         versionCodePrefix: 2,
         rustTarget: 'arm-linux-androideabi',
     ],
     'arm64-v8a': [
+        enabled: false,
         flavorName: 'arm64',
         versionCodePrefix: 3,
-        rustTarget: '',
+        rustTarget: 'unavailable-rust-arch-arm64',
     ],
     'mips': [
+        enabled: false,
         flavorName: 'mips',
         versionCodePrefix: 5,
-        rustTarget: '',
+        rustTarget: 'unavailable-rust-arch-mips',
     ],
     'mips64': [
+        enabled: false,
         flavorName: 'mips64',
         versionCodePrefix: 6,
-        rustTarget: '',
+        rustTarget: 'unavailable-rust-arch-mips64',
     ],
     'x86': [
+        enabled: true,
         flavorName: 'x86',
         versionCodePrefix: 8,
         rustTarget: 'i686-linux-android',
     ],
     'x86_64': [
+        enabled: false,
         flavorName: 'x86_64',
         versionCodePrefix: 9,
-        rustTarget: '',
+        rustTarget: 'unavailable-rust-arch-x86_64',
     ]
 ];
 
@@ -77,14 +84,20 @@ model {
     }
     android.productFlavors {
         appPlatforms.each { p ->
-            create (p.value.flavorName) {
-                ndk.abiFilters.add(p.key)
-                //ndk.ldLibs.add(file(rootDir).absolutePath) //file(rootDir).absolutePath + "/tgl/target/arm-linux-androideabi/debug/libtgl.a")
-                versionCode = p.value.versionCodePrefix * 1000000 + versionCodeBase
+            if (p.value.enabled) {
+                create(p.value.flavorName) {
+                    ndk.abiFilters.add(p.key)
+                    versionCode = p.value.versionCodePrefix * 1000000 + versionCodeBase
+                }
             }
         }
         create("fat") {
             versionCode = versionCodeBase
+            appPlatforms.each { p ->
+                if (p.value.enabled) {
+                    ndk.abiFilters.add(p.key)
+                }
+            }
         }
     }
 }
@@ -100,25 +113,32 @@ tasks.whenTaskAdded { t ->
     def depsDir = new File(rootDir, "deps")
     def crateDir = new File(depsDir, crateName)
 
+    def buildType = t.name.contains("Release") ? "release" : "debug"
+
     def rustTarget = appPlatforms.get(platform.name).rustTarget
+
     def targetDir = new File(crateDir, "target")
     def targetPlatformDir = new File(targetDir, rustTarget)
+    def targetBuildTypeDir = new File(targetPlatformDir, buildType)
+    def targetLibFile = new File(targetBuildTypeDir, "lib" + crateName + ".a")
 
-    t.dependsOn task("rust-$t.name", {
+    def linkerArgs = t.properties.get('linkerArgs');
+    linkerArgs.add("-l" + targetLibFile.getPath() + "")
+    t.properties['linkerArgs'] = linkerArgs
+    t.inputs.file targetLibFile
+
+    t.dependsOn task("rust-$t.name", { rustTask ->
+        inputs.property "buildType", buildType
         inputs.dir new File(crateDir, 'src')
         inputs.file new File(crateDir, 'Cargo.toml')
-        outputs.file new File(targetPlatformDir, "lib" + crateName + ".a")
+        outputs.file targetLibFile
 
         doFirst {
-            if (rustTarget == "") {
-                throw new StopExecutionException("Can not build Rust for " + platform + " yet.");
-            }
             println "building rust lib " + crateName + " on " + platform + " with " + rustTarget + " target"
-
             exec {
                 workingDir rootDir
                 executable 'dev/build.sh'
-                args rustTarget
+                args = [rustTarget, buildType]
             }
         }
     })

@@ -1,6 +1,9 @@
 #include "activity.h"
 
 #include <android/log.h>
+#include <stdint.h>
+
+extern "C" { int32_t rust_hello_world(void); }
 
 #define LOGI(...) ((void)__android_log_print(ANDROID_LOG_INFO, "threaded_app", __VA_ARGS__))
 #define LOGE(...) ((void)__android_log_print(ANDROID_LOG_ERROR, "threaded_app", __VA_ARGS__))
@@ -14,7 +17,8 @@
 
 void ANativeActivity_onCreate(ANativeActivity* activity,
                               void* savedState, size_t savedStateSize) {
-    LOGV("Hellow from activity: %p\n", activity);
+    LOGV("Hello from activity: %p\n", activity);
+    LOGV("Result from Rust: %i\n", rust_hello_world());
 
 //    activity->callbacks->onDestroy = onDestroy;
 //    activity->callbacks->onStart = onStart;

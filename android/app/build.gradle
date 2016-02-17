@@ -48,8 +48,11 @@ def appPlatforms = [
     ]
 ];
 
+def cargoBinary = '/usr/local/bin/cargo'
+def multirustBinary = '/usr/local/bin/multirust'
+
 def crateName = "inl"
-def depsDir = new File(rootDir, "deps")
+def depsDir = rootDir.getParent()
 def crateDir = new File(depsDir, crateName)
 def crateTargetDir = new File(crateDir, "target")
 def crateIncludeDir = new File(crateTargetDir, "include")
@@ -123,7 +126,7 @@ task buildIncludeHeaders {
         println "building rust include headers"
         exec {
             workingDir crateDir
-            executable '/usr/local/bin/cargo'
+            executable cargoBinary
             args = ["build", "-j", "8"]
         }
     }
@@ -166,10 +169,22 @@ tasks.whenTaskAdded { t ->
 
         doFirst {
             println "building rust lib " + crateName + " on " + platform + " with " + rustTarget + " target"
+
             exec {
-                workingDir rootDir
-                executable 'dev/build.sh'
-                args = [rustTarget, buildType]
+                workingDir crateDir
+                executable multirustBinary
+                args = ["override", "android"]
+            }
+
+            def buildArgs = ["build", "--target=" + rustTarget, "-j", "8"]
+            if (buildType == "release") {
+                buildArgs.add("--release")
+            }
+
+            exec {
+                workingDir crateDir
+                executable cargoBinary
+                args = buildArgs
             }
         }
     })

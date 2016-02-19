@@ -1,9 +1,24 @@
+extern crate libc;
+
+pub mod egli;
+pub mod dropi;
+pub mod android;
+pub mod c_api;
 pub use c_api::*;
 
-mod c_api {
-    #[no_mangle]
-    pub extern fn rust_hello_world_9() -> i32 {
-        println!("Hello, I'm in Rust code! I'm about to return 11.");
-        12
-    }
+use dropi::ffi::android::native_activity::ANativeActivity;
+
+#[no_mangle]
+pub extern "C" fn android_activity_create(
+    activity: *mut ANativeActivity,
+    saved_state: *mut u8,
+    saved_state_size: usize
+) {
+    let state: &[u8] = unsafe { ::std::slice::from_raw_parts(saved_state, saved_state_size) };
+
+    dropi::logv("starting android_activity_create");
+    dropi::glue::bind_activity_lifecycle(
+        activity,
+        Box::new(android::InspectorActivity::new(state))
+    );
 }

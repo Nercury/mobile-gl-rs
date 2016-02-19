@@ -2,7 +2,9 @@
 name = "inl"
 version = "0.1.0"
 dependencies = [
+ "libc 0.2.7 (registry+https://github.com/rust-lang/crates.io-index)",
  "rusty-cheddar 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "servo-egl 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -61,6 +63,14 @@ dependencies = [
  "clap 1.5.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "syntex_syntax 0.24.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "toml 0.1.27 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "servo-egl"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+dependencies = [
+ "libc 0.2.7 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]

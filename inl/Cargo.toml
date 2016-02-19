@@ -8,5 +8,9 @@ build = "build.rs"
 name = "inl"
 crate-type = ["staticlib"]
 
+[dependencies]
+libc = "*"
+servo-egl = "*"
+
 [build-dependencies]
 rusty-cheddar = "0.3.0"

@@ -9,8 +9,10 @@ name = "inl"
 crate-type = ["staticlib"]
 
 [dependencies]
-libc = "*"
-servo-egl = "*"
+libc = "0.2"
+
+[dependencies.egli]
+path = "../../egli"
 
 [build-dependencies]
 rusty-cheddar = "0.3.0"

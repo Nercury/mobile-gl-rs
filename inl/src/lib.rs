@@ -1,6 +1,6 @@
 extern crate libc;
+extern crate egli;
 
-pub mod egli;
 pub mod dropi;
 pub mod android;
 pub mod c_api;

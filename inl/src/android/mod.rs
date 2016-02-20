@@ -36,14 +36,15 @@ pub struct InspectorWindow {
 
 impl InspectorWindow {
     pub fn new() -> InspectorWindow {
-        let mut display = Display::new(egli::GetDisplay::Default)
+        let mut display = Display::from_default_display()
             .expect("failed to get EGL display");
 
-        display.initialize()
-            .expect("failed to initialize EGL display");
+        let egl_version = display.initialize_and_get_version()
+            .expect("failed to initialize EGL");
+        dropi::logi(&format!("Using EGL {}", egl_version));
 
-        display.choose_config()
-            .expect("failed to choose EGL display config");
+        // display.choose_config()
+        //     .expect("failed to choose EGL display config");
 
         InspectorWindow {
             display: display,

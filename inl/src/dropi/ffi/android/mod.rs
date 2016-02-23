@@ -5,4 +5,3 @@ pub mod rect;
 pub mod input;
 pub mod looper;
 pub mod window;
-pub mod log;

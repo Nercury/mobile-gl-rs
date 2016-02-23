@@ -32,7 +32,7 @@ struct WindowState {
 }
 
 pub fn bind_activity_lifecycle(activity: *mut ANativeActivity, mut instance: Box<Activity>) {
-    dropi::logv("bind activity lifecycle");
+    trace!("bind activity lifecycle");
 
     let (tx, rx) = channel();
 
@@ -98,7 +98,7 @@ fn get_wrapper_ref<'r>(activity: *mut ANativeActivity) -> &'r mut Box<InstanceWr
 }
 
 extern "C" fn on_destroy(activity: *mut ANativeActivity) {
-    dropi::logv("on activity destroy");
+    trace!("on activity destroy");
 
     let wrapper: Box<InstanceWrapper> = take_wrapper(activity);
 
@@ -107,11 +107,11 @@ extern "C" fn on_destroy(activity: *mut ANativeActivity) {
     wrapper.thread.join()
         .expect("failed to join activity thread");
 
-    dropi::logv("cleaned up successfuly");
+    trace!("cleaned up successfuly");
 }
 
 extern "C" fn on_start(activity: *mut ANativeActivity) {
-    dropi::logv("on activity start");
+    trace!("on activity start");
 
     get_wrapper_ref(activity)
         .queue.send(Command::Lifecycle(LifecycleState::Started))
@@ -119,7 +119,7 @@ extern "C" fn on_start(activity: *mut ANativeActivity) {
 }
 
 extern "C" fn on_resume(activity: *mut ANativeActivity) {
-    dropi::logv("on activity resume");
+    trace!("on activity resume");
 
     get_wrapper_ref(activity)
         .queue.send(Command::Lifecycle(LifecycleState::Resumed))
@@ -127,7 +127,7 @@ extern "C" fn on_resume(activity: *mut ANativeActivity) {
 }
 
 extern "C" fn on_window_focus_changed(activity: *mut ANativeActivity, has_focus: libc::c_int) {
-    dropi::logv("on window focus changed");
+    trace!("on window focus changed");
 
     get_wrapper_ref(activity)
         .queue.send(if has_focus != 0 { Command::GainedFocus } else { Command::LostFocus })
@@ -135,7 +135,7 @@ extern "C" fn on_window_focus_changed(activity: *mut ANativeActivity, has_focus:
 }
 
 extern "C" fn on_native_window_created(activity: *mut ANativeActivity, window: *mut ANativeWindow) {
-    dropi::logv("on native window created");
+    trace!("on native window created");
 
     get_wrapper_ref(activity)
         .queue.send(Command::SetWindow(Some(WindowWrapper { native: window })))
@@ -143,7 +143,7 @@ extern "C" fn on_native_window_created(activity: *mut ANativeActivity, window: *
 }
 
 extern "C" fn on_native_window_destroyed(activity: *mut ANativeActivity, _window: *mut ANativeWindow) {
-    dropi::logv("on native window destroyed");
+    trace!("on native window destroyed");
 
     get_wrapper_ref(activity)
         .queue.send(Command::SetWindow(None))

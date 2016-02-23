@@ -17,10 +17,10 @@ def appPlatforms = [
         rustTarget: 'arm-linux-androideabi',
     ],
     'arm64-v8a': [
-        enabled: false,
+        enabled: true,
         flavorName: 'arm64',
         versionCodePrefix: 3,
-        rustTarget: 'unavailable-rust-arch-arm64',
+        rustTarget: 'aarch64-linux-android',
     ],
     'mips': [
         enabled: false,

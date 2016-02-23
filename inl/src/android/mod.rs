@@ -12,17 +12,17 @@ impl InspectorActivity {
 impl Activity for InspectorActivity {
     fn set_state(&mut self, lifecycle_state: LifecycleState) {
         match lifecycle_state {
-            LifecycleState::Started => dropi::logi("I was started!"),
-            LifecycleState::Resumed => dropi::logi("I was resumed!"),
+            LifecycleState::Started => info!("I was started!"),
+            LifecycleState::Resumed => info!("I was resumed!"),
         }
     }
 
     fn gain_focus(&mut self) {
-        dropi::logi("I gained focus!");
+        info!("I gained focus! ");
     }
 
     fn loose_focus(&mut self) {
-        dropi::logi("I lost focus!");
+        info!("I lost focus!");
     }
 
     fn init_window(&mut self) -> Option<Box<Window>> {
@@ -41,7 +41,13 @@ impl InspectorWindow {
 
         let egl_version = display.initialize_and_get_version()
             .expect("failed to initialize EGL");
-        dropi::logi(&format!("Using EGL {}", egl_version));
+        info!("Using EGL {}", egl_version);
+
+        let configs = display.get_configs()
+            .expect("failed to get display configs");
+        info!("There are {} possible display configurations:", configs.len());
+        info!("{:?}", configs);
+
 
         // display.choose_config()
         //     .expect("failed to choose EGL display config");

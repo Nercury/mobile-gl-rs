@@ -3,7 +3,7 @@ use std::mem;
 use std::thread;
 use std::time;
 use std::sync::mpsc::{ self, channel };
-use dropi::{ self, Activity, Window, LifecycleState };
+use dropi::{ Activity, Window, LifecycleState };
 use dropi::ffi::android::native_activity::ANativeActivity;
 use dropi::ffi::android::native_window::ANativeWindow;
 

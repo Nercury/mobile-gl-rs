@@ -163,6 +163,7 @@ tasks.whenTaskAdded { t ->
     t.dependsOn task("rust-$t.name", { rustTask ->
         inputs.property "buildType", buildType
         inputs.dir new File(crateDir, 'src')
+        inputs.dir new File(crateDir, '../../egli/src')
         inputs.file new File(crateDir, 'build.rs')
         inputs.file new File(crateDir, 'Cargo.toml')
         outputs.file targetLibFile

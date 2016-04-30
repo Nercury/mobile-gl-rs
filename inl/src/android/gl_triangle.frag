@@ -1,0 +1,8 @@
+#version 300 es
+precision mediump float;
+
+out vec4 fragmentColor;
+
+void main() {
+    fragmentColor = World vec4(1.0, 1.0, 1.0, 1.0);
+}

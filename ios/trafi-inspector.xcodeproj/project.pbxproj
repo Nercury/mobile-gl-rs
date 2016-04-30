@@ -28,7 +28,6 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		AD7B8A841C74C93B00C23A33 /* trafi-inspector.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; name = "trafi-inspector.app"; path = "/Users/nercury/work/TrafiInspector/ios/build/Debug-iphoneos/trafi-inspector.app"; sourceTree = "<absolute>"; };
 		AD7B8A871C74C93B00C23A33 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		AD7B8A891C74C93B00C23A33 /* Shader.fsh */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.glsl; name = Shader.fsh; path = Shaders/Shader.fsh; sourceTree = "<group>"; };
 		AD7B8A8B1C74C93B00C23A33 /* Shader.vsh */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.glsl; name = Shader.vsh; path = Shaders/Shader.vsh; sourceTree = "<group>"; };
@@ -37,11 +36,10 @@
 		AD7B8A921C74C93B00C23A33 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		AD7B8A951C74C93B00C23A33 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		AD7B8A971C74C93B00C23A33 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		AD7B8A9D1C7512E200C23A33 /* trafi-inspector-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "trafi-inspector-Bridging-Header.h"; sourceTree = "<group>"; };
-		AD7B8AA01C75136700C23A33 /* inl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = inl.h; path = ../inl/target/include/inl.h; sourceTree = SOURCE_ROOT; };
 		AD7B8AA51C75180200C23A33 /* build-rust-library.sh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.sh; path = "build-rust-library.sh"; sourceTree = "<group>"; };
 		AD7B8AAB1C75219700C23A33 /* ios-combined-libinl.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = "ios-combined-libinl.a"; path = "../inl/target/ios-combined-libinl.a"; sourceTree = SOURCE_ROOT; };
 		AD7B8AAD1C75248A00C23A33 /* inl */ = {isa = PBXFileReference; lastKnownFileType = folder; name = inl; path = ../inl; sourceTree = SOURCE_ROOT; };
+		AD9C9A281CB1332B00D1619D /* trafi-inspector.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "trafi-inspector.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -62,6 +60,7 @@
 				AD7B8AAB1C75219700C23A33 /* ios-combined-libinl.a */,
 				AD7B8A861C74C93B00C23A33 /* trafi-inspector */,
 				AD7B8AAD1C75248A00C23A33 /* inl */,
+				AD9C9A281CB1332B00D1619D /* trafi-inspector.app */,
 			);
 			sourceTree = "<group>";
 		};
@@ -76,8 +75,6 @@
 				AD7B8A921C74C93B00C23A33 /* Assets.xcassets */,
 				AD7B8A941C74C93B00C23A33 /* LaunchScreen.storyboard */,
 				AD7B8A971C74C93B00C23A33 /* Info.plist */,
-				AD7B8A9D1C7512E200C23A33 /* trafi-inspector-Bridging-Header.h */,
-				AD7B8AA01C75136700C23A33 /* inl.h */,
 				AD7B8AA51C75180200C23A33 /* build-rust-library.sh */,
 			);
 			path = "trafi-inspector";
@@ -118,7 +115,7 @@
 			);
 			name = "trafi-inspector";
 			productName = "trafi-inspector";
-			productReference = AD7B8A841C74C93B00C23A33 /* trafi-inspector.app */;
+			productReference = AD9C9A281CB1332B00D1619D /* trafi-inspector.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -305,7 +302,7 @@
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = "com.trafi.trafi-inspector";
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_OBJC_BRIDGING_HEADER = "trafi-inspector/trafi-inspector-Bridging-Header.h";
+				SWIFT_OBJC_BRIDGING_HEADER = "";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
 			name = Debug;
@@ -319,7 +316,7 @@
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = "com.trafi.trafi-inspector";
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_OBJC_BRIDGING_HEADER = "trafi-inspector/trafi-inspector-Bridging-Header.h";
+				SWIFT_OBJC_BRIDGING_HEADER = "";
 			};
 			name = Release;
 		};

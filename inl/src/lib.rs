@@ -1,14 +1,15 @@
-#![feature(panic_handler, unique)]
+#![feature(panic_handler, unique, question_mark)]
 
 extern crate libc;
 extern crate egli;
 #[macro_use] extern crate log;
 extern crate android_logger;
+extern crate android_looper_sys;
+extern crate android_looper;
+extern crate android_sensor;
 
 pub mod dropi;
 pub mod android;
-pub mod c_api;
-pub use c_api::*;
 
 use std::mem;
 use std::ptr;
@@ -20,7 +21,7 @@ pub extern "C" fn android_activity_create(
     saved_state: *mut u8,
     saved_state_size: usize
 ) {
-    android_logger::init_once(log::LogLevel::Trace);
+    android_logger::init_once(log::LogLevel::Debug);
     log_panics();
 
     let state: &[u8] = unsafe { ::std::slice::from_raw_parts(saved_state, saved_state_size) };
@@ -35,7 +36,7 @@ pub extern "C" fn android_activity_create(
     dropi::glue::bind_activity_lifecycle(
        activity,
        Box::new(android::InspectorActivity::new(state))
-    );
+   ).expect("failed to initialize activity");
 }
 
 mod very_long_module_name_which_will_not_fit {
@@ -51,7 +52,7 @@ mod very_long_module_name_which_will_not_fit {
 ///
 /// Requires the `use_std` (enabled by default) and `nightly` features.
 fn log_panics() {
-    std::panic::set_handler(panic_logger::log);
+    std::panic::set_hook(Box::new(panic_logger::log));
 }
 
 // inner module so that the reporting module is log::panic instead of log

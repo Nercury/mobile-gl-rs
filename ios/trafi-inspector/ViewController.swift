@@ -55,7 +55,7 @@ class GameViewController: GLKViewController {
         
         self.setupGL()
         
-        print("returned from rust: \(rust_hello_world_9())");
+        // print("returned from rust: \(rust_hello_world_9())");
     }
     
     override func didReceiveMemoryWarning() {

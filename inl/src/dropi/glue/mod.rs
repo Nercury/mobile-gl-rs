@@ -3,27 +3,14 @@ use std::mem;
 use std::thread;
 use std::time;
 use std::sync::mpsc::{ self, channel };
-use dropi::{ Activity, Window, LifecycleState };
+use dropi::{ Activity, Window, LifecycleState, Command, WindowWrapper };
 use dropi::ffi::android::native_activity::ANativeActivity;
 use dropi::ffi::android::native_window::ANativeWindow;
-
-enum Command {
-    Destroy,
-    Lifecycle(LifecycleState),
-    GainedFocus,
-    LostFocus,
-    SetWindow(Option<WindowWrapper>),
-}
-
-struct WindowWrapper {
-    native: *mut ANativeWindow,
-}
-
-unsafe impl Send for WindowWrapper {}
+use dropi::error::Result;
 
 struct InstanceWrapper {
     queue: mpsc::Sender<Command>,
-    thread: thread::JoinHandle<Box<Activity>>,
+    thread: thread::JoinHandle<Result<Box<Activity>>>,
 }
 
 struct WindowState {
@@ -31,7 +18,7 @@ struct WindowState {
     app: Option<Box<Window>>,
 }
 
-pub fn bind_activity_lifecycle(activity: *mut ANativeActivity, mut instance: Box<Activity>) {
+pub fn bind_activity_lifecycle(activity: *mut ANativeActivity, mut instance: Box<Activity>) -> Result<()> {
     trace!("bind activity lifecycle");
 
     let (tx, rx) = channel();
@@ -54,7 +41,11 @@ pub fn bind_activity_lifecycle(activity: *mut ANativeActivity, mut instance: Box
                     Command::SetWindow(maybe_window) => {
                         window_state = match (window_state.native, maybe_window) {
                             (_, Some(new)) => WindowState {
-                                native: Some(new), app: instance.init_window()
+                                native: Some(new), app: Some({
+                                    let mut window = instance.create_window(new.native)?;
+                                    instance.init(&mut *window);
+                                    window
+                                })
                             },
                             _ =>  WindowState { native: None, app: None },
                         };
@@ -63,30 +54,33 @@ pub fn bind_activity_lifecycle(activity: *mut ANativeActivity, mut instance: Box
             }
 
             if let Some(ref mut window) = window_state.app {
-                window.render();
+                instance.render(&mut **window);
+                window.swap_buffers()?;
             }
 
             thread::sleep(time::Duration::from_millis(1));
         }
 
-        instance
+        Ok(instance)
     });
 
     // it's less scary with single unsafe block
     unsafe {
         let callbacks = (*activity).callbacks;
-        (*callbacks).onDestroy = Some(mem::transmute(on_destroy));
-        (*callbacks).onStart = Some(mem::transmute(on_start));
-        (*callbacks).onResume = Some(mem::transmute(on_resume));
-        (*callbacks).onWindowFocusChanged = Some(mem::transmute(on_window_focus_changed));
-        (*callbacks).onNativeWindowCreated = Some(mem::transmute(on_native_window_created));
-        (*callbacks).onNativeWindowDestroyed = Some(mem::transmute(on_native_window_destroyed));
+        (*callbacks).onDestroy = Some(on_destroy);
+        (*callbacks).onStart = Some(on_start);
+        (*callbacks).onResume = Some(on_resume);
+        (*callbacks).onWindowFocusChanged = Some(on_window_focus_changed);
+        (*callbacks).onNativeWindowCreated = Some(on_native_window_created);
+        (*callbacks).onNativeWindowDestroyed = Some(on_native_window_destroyed);
 
         (*activity).instance = mem::transmute(Box::new(InstanceWrapper {
             queue: tx,
             thread: activity_thread,
         }));
     }
+
+    Ok(())
 }
 
 fn take_wrapper(activity: *mut ANativeActivity) -> Box<InstanceWrapper> {
@@ -97,7 +91,7 @@ fn get_wrapper_ref<'r>(activity: *mut ANativeActivity) -> &'r mut Box<InstanceWr
     unsafe { mem::transmute(&mut (*activity).instance) }
 }
 
-extern "C" fn on_destroy(activity: *mut ANativeActivity) {
+unsafe extern "C" fn on_destroy(activity: *mut ANativeActivity) {
     trace!("on activity destroy");
 
     let wrapper: Box<InstanceWrapper> = take_wrapper(activity);
@@ -105,12 +99,13 @@ extern "C" fn on_destroy(activity: *mut ANativeActivity) {
     wrapper.queue.send(Command::Destroy)
         .expect("failed to send on_destroy to activity");
     wrapper.thread.join()
-        .expect("failed to join activity thread");
+        .expect("failed to join activity thread")
+        .expect("app window error");
 
     trace!("cleaned up successfuly");
 }
 
-extern "C" fn on_start(activity: *mut ANativeActivity) {
+unsafe extern "C" fn on_start(activity: *mut ANativeActivity) {
     trace!("on activity start");
 
     get_wrapper_ref(activity)
@@ -118,7 +113,7 @@ extern "C" fn on_start(activity: *mut ANativeActivity) {
         .expect("failed to send on_start to activity");
 }
 
-extern "C" fn on_resume(activity: *mut ANativeActivity) {
+unsafe extern "C" fn on_resume(activity: *mut ANativeActivity) {
     trace!("on activity resume");
 
     get_wrapper_ref(activity)
@@ -126,7 +121,7 @@ extern "C" fn on_resume(activity: *mut ANativeActivity) {
         .expect("failed to send on_resume to activity");
 }
 
-extern "C" fn on_window_focus_changed(activity: *mut ANativeActivity, has_focus: libc::c_int) {
+unsafe extern "C" fn on_window_focus_changed(activity: *mut ANativeActivity, has_focus: libc::c_int) {
     trace!("on window focus changed");
 
     get_wrapper_ref(activity)
@@ -134,7 +129,7 @@ extern "C" fn on_window_focus_changed(activity: *mut ANativeActivity, has_focus:
         .expect("failed to send on_window_focus_changed to activity");
 }
 
-extern "C" fn on_native_window_created(activity: *mut ANativeActivity, window: *mut ANativeWindow) {
+unsafe extern "C" fn on_native_window_created(activity: *mut ANativeActivity, window: *mut ANativeWindow) {
     trace!("on native window created");
 
     get_wrapper_ref(activity)
@@ -142,7 +137,7 @@ extern "C" fn on_native_window_created(activity: *mut ANativeActivity, window: *
         .expect("failed to send on_native_window_created to activity");
 }
 
-extern "C" fn on_native_window_destroyed(activity: *mut ANativeActivity, _window: *mut ANativeWindow) {
+unsafe extern "C" fn on_native_window_destroyed(activity: *mut ANativeActivity, _window: *mut ANativeWindow) {
     trace!("on native window destroyed");
 
     get_wrapper_ref(activity)

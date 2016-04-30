@@ -2,9 +2,13 @@
 
 export DYLD_LIBRARY_PATH=/Library/Developer/CommandLineTools/usr/lib
 
-PATH="/Users/nercury/Library/Android/sdk/ndk-bundle/platforms/android-21/arch-x86_64/usr"
+PATH="/Users/nercury/android-sdk/ndk-bundle/platforms/android-21/arch-x86_64/usr"
 
 export C_INCLUDE_PATH=${PATH}/include
+
+BINDGEN="/Users/nercury/.multirust/toolchains/nightly-2016-04-14/cargo/bin/bindgen"
+
+export DYLD_LIBRARY_PATH=/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/
 
 # echo "#include <android/native_activity.h>" > gen.h
 # /Users/nercury/.multirust/toolchains/nightly/cargo/bin/bindgen \
@@ -30,11 +34,11 @@ export C_INCLUDE_PATH=${PATH}/include
 #    -o src/android/ffi/android/window.rs \
 #    gen.h
 
-echo "#include <android/log.h>" > gen.h
-/Users/nercury/.multirust/toolchains/nightly/cargo/bin/bindgen \
-    -match android/log.h \
-    -o src/android/ffi/android/log.rs \
-    gen.h
+# echo "#include <android/log.h>" > gen.h
+# /Users/nercury/.multirust/toolchains/nightly/cargo/bin/bindgen \
+#     -match android/log.h \
+#     -o src/android/ffi/android/log.rs \
+#     gen.h
 
 # echo "#include <android/native_window.h>" > gen.h
 # /Users/nercury/.multirust/toolchains/nightly/cargo/bin/bindgen \
@@ -59,3 +63,9 @@ echo "#include <android/log.h>" > gen.h
 #     -match jni.h \
 #     -o src/android/ffi/jni.rs \
 #     gen.h
+
+echo "#include <android/sensor.h>" > gen.h
+${BINDGEN} \
+    -match android/sensor.h \
+    -o src/dropi/ffi/android/sensor.rs \
+    gen.h

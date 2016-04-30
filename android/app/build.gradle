@@ -4,48 +4,48 @@ apply plugin: 'com.android.model.application'
 
 def versionCodeBase = 11;
 def appPlatforms = [
-    'armeabi': [
-        enabled: true,
-        flavorName: 'arm',
-        versionCodePrefix: 1,
-        rustTarget: 'arm-linux-androideabi',
-    ],
-    'armeabi-v7a': [
-        enabled: true,
-        flavorName: 'arm7',
-        versionCodePrefix: 2,
-        rustTarget: 'arm-linux-androideabi',
-    ],
-    'arm64-v8a': [
-        enabled: true,
-        flavorName: 'arm64',
-        versionCodePrefix: 3,
-        rustTarget: 'aarch64-linux-android',
-    ],
-    'mips': [
-        enabled: false,
-        flavorName: 'mips',
-        versionCodePrefix: 5,
-        rustTarget: 'unavailable-rust-arch-mips',
-    ],
-    'mips64': [
-        enabled: false,
-        flavorName: 'mips64',
-        versionCodePrefix: 6,
-        rustTarget: 'unavailable-rust-arch-mips64',
-    ],
-    'x86': [
-        enabled: true,
-        flavorName: 'x86',
-        versionCodePrefix: 8,
-        rustTarget: 'i686-linux-android',
-    ],
-    'x86_64': [
-        enabled: false,
-        flavorName: 'x86_64',
-        versionCodePrefix: 9,
-        rustTarget: 'unavailable-rust-arch-x86_64',
-    ]
+        'armeabi'    : [
+                enabled          : true,
+                flavorName       : 'arm',
+                versionCodePrefix: 1,
+                rustTarget       : 'arm-linux-androideabi',
+        ],
+        'armeabi-v7a': [
+                enabled          : true,
+                flavorName       : 'arm7',
+                versionCodePrefix: 2,
+                rustTarget       : 'arm-linux-androideabi',
+        ],
+        'arm64-v8a'  : [
+                enabled          : true,
+                flavorName       : 'arm64',
+                versionCodePrefix: 3,
+                rustTarget       : 'aarch64-linux-android',
+        ],
+        'mips'       : [
+                enabled          : false,
+                flavorName       : 'mips',
+                versionCodePrefix: 5,
+                rustTarget       : 'unavailable-rust-arch-mips',
+        ],
+        'mips64'     : [
+                enabled          : false,
+                flavorName       : 'mips64',
+                versionCodePrefix: 6,
+                rustTarget       : 'unavailable-rust-arch-mips64',
+        ],
+        'x86'        : [
+                enabled          : true,
+                flavorName       : 'x86',
+                versionCodePrefix: 8,
+                rustTarget       : 'i686-linux-android',
+        ],
+        'x86_64'     : [
+                enabled          : false,
+                flavorName       : 'x86_64',
+                versionCodePrefix: 9,
+                rustTarget       : 'unavailable-rust-arch-x86_64',
+        ]
 ];
 
 def cargoBinary = '/usr/local/bin/cargo'
@@ -56,7 +56,6 @@ def depsDir = rootDir.getParent()
 def crateDir = new File(depsDir, crateName)
 def crateTargetDir = new File(crateDir, "target")
 def crateIncludeDir = new File(crateTargetDir, "include")
-def crateIncludeFile = new File(crateIncludeDir, "inl.h")
 
 model {
     android {
@@ -81,9 +80,9 @@ model {
         cppFlags.add("-I${file("src/main/jni/glass-activity")}".toString())
 
         ldLibs.addAll(
-            [
-                "log", "android", "EGL", "GLESv1_CM"
-            ]
+                [
+                        "log", "android", "EGL", "GLESv1_CM"
+                ]
         )
     }
     android.buildTypes {
@@ -114,31 +113,6 @@ model {
         }
     }
 }
-
-// Run cargo build for library to generate target/include/ headers
-task buildIncludeHeaders {
-    inputs.dir new File(crateDir, 'src')
-    inputs.file new File(crateDir, 'build.rs')
-    inputs.file new File(crateDir, 'Cargo.toml')
-    outputs.file crateIncludeFile
-
-    doFirst {
-        println "building rust include headers"
-        exec {
-            workingDir crateDir
-            executable cargoBinary
-            args = ["build", "-j", "8"]
-        }
-    }
-}
-
-tasks.whenTaskAdded { t ->
-    if (t.path.contains(":compile")) {
-        t.inputs.file crateIncludeFile
-        t.dependsOn buildIncludeHeaders
-    }
-}
-
 // For every existing platform, create a task to build rust library with correct target
 tasks.whenTaskAdded { t ->
     if (!(t instanceof LinkSharedLibrary)) {
@@ -157,13 +131,17 @@ tasks.whenTaskAdded { t ->
     def linkerArgs = t.properties.get('linkerArgs');
     linkerArgs.add("-l" + targetLibFile.getPath() + "")
     t.properties['linkerArgs'] = linkerArgs
-    t.inputs.file crateIncludeFile
     t.inputs.file targetLibFile
 
     t.dependsOn task("rust-$t.name", { rustTask ->
         inputs.property "buildType", buildType
         inputs.dir new File(crateDir, 'src')
-        inputs.dir new File(crateDir, '../../egli/src')
+        inputs.dir new File(crateDir, '../../egli-rs/src')
+        inputs.dir new File(crateDir, '../../kugel-rs/src')
+        inputs.dir new File(crateDir, '../../android_looper/src')
+        inputs.dir new File(crateDir, '../../android_looper-sys/src')
+        inputs.dir new File(crateDir, '../../android_sensor/src')
+        inputs.dir new File(crateDir, '../../android_sensor-sys/src')
         inputs.file new File(crateDir, 'build.rs')
         inputs.file new File(crateDir, 'Cargo.toml')
         outputs.file targetLibFile

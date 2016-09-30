@@ -87,3 +87,12 @@ name = "log"
 version = "0.3.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
+[metadata]
+"checksum android_log-sys 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)" = "37e19fbefe3a684a203b4f9d73ccb59bd31d967adc8560a215708c4ba4e4144e"
+"checksum android_logger 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)" = "ba76db78b98f3c1e457df4bc39a4b42d6c135a0178a27381fe50ea8bcf00ba01"
+"checksum android_looper 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)" = "a7098340a954603e00570febbc6572e0ecd03130ce98c415eb4634d26ce5a617"
+"checksum android_looper-sys 0.1.3 (registry+https://github.com/rust-lang/crates.io-index)" = "77f87da5ff93749c7063b2f0a1e2a7e8f33bda741ff8ec5c892fa27df31a5cda"
+"checksum android_sensor-sys 0.1.3 (registry+https://github.com/rust-lang/crates.io-index)" = "654a5cd4102364e860a60126893117bbf533e17d24332a809a7adde4da1f0ea9"
+"checksum bitflags 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)" = "4f67931368edf3a9a51d29886d245f1c3db2f1ef0dcc9e35ff70341b78c10d23"
+"checksum libc 0.2.10 (registry+https://github.com/rust-lang/crates.io-index)" = "55f3730be7e803cf350d32061958171731c2395831fbd67a61083782808183e0"
+"checksum log 0.3.6 (registry+https://github.com/rust-lang/crates.io-index)" = "ab83497bf8bf4ed2a74259c1c802351fcd67a65baa86394b6ba73c36f4838054"

@@ -1,5 +1,3 @@
-import org.gradle.nativeplatform.tasks.LinkSharedLibrary
-
 apply plugin: 'com.android.model.application'
 
 def versionCodeBase = 11;
@@ -14,7 +12,7 @@ def appPlatforms = [
                 enabled          : true,
                 flavorName       : 'arm7',
                 versionCodePrefix: 2,
-                rustTarget       : 'arm-linux-androideabi',
+                rustTarget       : 'armv7-linux-androideabi',
         ],
         'arm64-v8a'  : [
                 enabled          : true,
@@ -35,7 +33,7 @@ def appPlatforms = [
                 rustTarget       : 'unavailable-rust-arch-mips64',
         ],
         'x86'        : [
-                enabled          : true,
+                enabled          : false,
                 flavorName       : 'x86',
                 versionCodePrefix: 8,
                 rustTarget       : 'i686-linux-android',
@@ -71,6 +69,7 @@ model {
         }
     }
     android.ndk {
+//        toolchain "clang"
         moduleName = "glass-activity"
         stl = "stlport_static" // gnustl or stlport
 
@@ -113,58 +112,91 @@ model {
         }
     }
 }
+
+for (appPlatform in appPlatforms.entrySet()) {
+    for (buildType in ["debug", "release"]) {
+        def platform = appPlatform.key;
+        def rustTarget = appPlatform.value.rustTarget
+
+        def targetPlatformDir = new File(crateTargetDir, rustTarget)
+        def targetBuildTypeDir = new File(targetPlatformDir, buildType)
+        def targetLibFile = new File(targetBuildTypeDir, "lib" + crateName + ".a")
+
+        def t = tasks.create("rust-$platform-$buildType", { rustTask ->
+            inputs.dir new File(crateDir, 'src')
+            inputs.dir new File(crateDir, '../../egli-rs/src')
+            inputs.dir new File(crateDir, '../../kugel-rs/src')
+            inputs.dir new File(crateDir, '../../android_looper/src')
+            inputs.dir new File(crateDir, '../../android_looper-sys/src')
+            inputs.dir new File(crateDir, '../../android_sensor/src')
+            inputs.dir new File(crateDir, '../../android_sensor-sys/src')
+            inputs.file new File(crateDir, 'build.rs')
+            inputs.file new File(crateDir, 'Cargo.toml')
+            outputs.file targetLibFile
+            inputs.property "buildType", buildType
+
+            doLast {
+                println "building rust lib " + crateName + " for " + rustTarget + " target"
+
+                exec {
+                    workingDir crateDir
+                    executable multirustBinary
+                    args = ["override", "nightly"]
+                }
+
+                def buildArgs = ["build", "--target=" + rustTarget, "-j", "8"]
+                if (buildType == "release") {
+                    buildArgs.add("--release")
+                }
+
+                exec {
+                    workingDir crateDir
+                    executable cargoBinary
+                    args = buildArgs
+                }
+            }
+        })
+    }
+}
+
 // For every existing platform, create a task to build rust library with correct target
 tasks.whenTaskAdded { t ->
-    if (!(t instanceof LinkSharedLibrary)) {
+    if (!(t instanceof org.gradle.nativeplatform.tasks.LinkSharedLibrary)) {
         return;
     }
 
-    def platform = t.properties.get("targetPlatform")
+    def platform = t.properties.get("targetPlatform").name
     def buildType = t.name.contains("Release") ? "release" : "debug"
 
-    def rustTarget = appPlatforms.get(platform.name).rustTarget
+    def rustTarget = appPlatforms.get(platform).rustTarget
 
     def targetPlatformDir = new File(crateTargetDir, rustTarget)
     def targetBuildTypeDir = new File(targetPlatformDir, buildType)
     def targetLibFile = new File(targetBuildTypeDir, "lib" + crateName + ".a")
 
     def linkerArgs = t.properties.get('linkerArgs');
-    linkerArgs.add("-l" + targetLibFile.getPath() + "")
+    linkerArgs.add("-L" + targetBuildTypeDir.getPath() + "")
+    linkerArgs.add("-l" + crateName + "")
     t.properties['linkerArgs'] = linkerArgs
     t.inputs.file targetLibFile
+}
 
-    t.dependsOn task("rust-$t.name", { rustTask ->
-        inputs.property "buildType", buildType
-        inputs.dir new File(crateDir, 'src')
-        inputs.dir new File(crateDir, '../../egli-rs/src')
-        inputs.dir new File(crateDir, '../../kugel-rs/src')
-        inputs.dir new File(crateDir, '../../android_looper/src')
-        inputs.dir new File(crateDir, '../../android_looper-sys/src')
-        inputs.dir new File(crateDir, '../../android_sensor/src')
-        inputs.dir new File(crateDir, '../../android_sensor-sys/src')
-        inputs.file new File(crateDir, 'build.rs')
-        inputs.file new File(crateDir, 'Cargo.toml')
-        outputs.file targetLibFile
+// For every existing platform, create a task to build rust library with correct target
+tasks.whenTaskAdded { t ->
+    if (!(t instanceof org.gradle.nativeplatform.tasks.CreateStaticLibrary)) {
+        return;
+    }
 
-        doFirst {
-            println "building rust lib " + crateName + " on " + platform + " with " + rustTarget + " target"
+    def platform = t.properties.get("targetPlatform").name
+    def buildType = t.name.contains("Release") ? "release" : "debug"
 
-            exec {
-                workingDir crateDir
-                executable multirustBinary
-                args = ["override", "android"]
-            }
+    println("platform: $platform")
+    println("buildType: $buildType")
 
-            def buildArgs = ["build", "--target=" + rustTarget, "-j", "8"]
-            if (buildType == "release") {
-                buildArgs.add("--release")
-            }
+    def rustTask = tasks.findByName("rust-$platform-$buildType")
+    if (rustTask != null) {
+        println "found " + rustTask.name
+        t.dependsOn rustTask
+    }
 
-            exec {
-                workingDir crateDir
-                executable cargoBinary
-                args = buildArgs
-            }
-        }
-    })
 }
